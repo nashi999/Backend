@@ -103,10 +103,12 @@ class LoginViewSet(viewsets.GenericViewSet, mixins.CreateModelMixin):
         
         response = Response(status=status.HTTP_200_OK)
         
+        response.set_cookie(key='jwt',value=str(token),httponly=True)
         
         response.data = {
             'refresh':str(refresh),
-            'access':str(token)
+            'access':str(token),
+            'email':user.email
         }
         return response
 
@@ -116,6 +118,7 @@ class LogoutViewset(views.APIView):
     
     def get(self,request):
         response=Response()
+        response.delete_cookie('jwt')
         response.data = {
             'message': 'success'
         }
@@ -156,10 +159,10 @@ class PasswordForgor(viewsets.GenericViewSet,mixins.CreateModelMixin):
         }
         return response
 
-    def partial_update(self,request):
-
-        new_password = request.data[new_password]
-        token = request.data[token]
+    def partial_update(self,request,pk=None):
+        new_password=None
+        new_password = request.data.get(new_password)
+        token = request.data.get(token)
         instance = FindPasswordRecord.objects.get(token=token)
         
         if instance.isExpiried:
